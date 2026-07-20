@@ -9,5 +9,4 @@ public class ManagerLmsMiniApplication {
     public static void main(String[] args) {
         SpringApplication.run(ManagerLmsMiniApplication.class, args);
     }
-
 }

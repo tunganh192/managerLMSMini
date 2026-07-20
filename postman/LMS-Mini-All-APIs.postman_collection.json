@@ -1,0 +1,1989 @@
+{
+  "info": {
+    "_postman_id": "28d4fcad-583d-4a1e-93a7-94dd54a9f9a0",
+    "name": "LMS Mini - All APIs Success & Error",
+    "description": "Chạy bằng Collection Runner theo đúng thứ tự. Collection tự tạo email/mã khóa duy nhất, lưu các ID và dọn dữ liệu ở cuối. Các file multipart dùng asset có sẵn trong workspace D:\\Java\\managerLMSMini\\uploads\\seed\\assets. Ứng dụng cần chạy tại baseUrl trước khi test.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "language",
+      "value": "vi"
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "studentEmail",
+      "value": ""
+    },
+    {
+      "key": "courseCode",
+      "value": ""
+    },
+    {
+      "key": "studentId",
+      "value": ""
+    },
+    {
+      "key": "courseId",
+      "value": ""
+    },
+    {
+      "key": "lessonId",
+      "value": ""
+    },
+    {
+      "key": "enrollmentId",
+      "value": ""
+    },
+    {
+      "key": "missingId",
+      "value": "999999999999"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Students",
+      "item": [
+        {
+          "name": "SUCCESS - Thêm học viên",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students",
+            "description": "Request đầu tiên của collection. Tạo runId mới và lưu studentId.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Nguyễn Văn Postman",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "{{studentEmail}}",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "0901234567",
+                  "type": "text"
+                },
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\medical-team.png"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = Date.now().toString();",
+                  "pm.collectionVariables.set(\"runId\", runId);",
+                  "pm.collectionVariables.set(\"studentEmail\", \"lms.\" + runId + \"@example.com\");",
+                  "pm.collectionVariables.set(\"courseCode\", \"LMS-\" + runId);",
+                  "[\"studentId\",\"courseId\",\"lessonId\",\"enrollmentId\"].forEach(function (key) { pm.collectionVariables.unset(key); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 201); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "const body = pm.response.json(); pm.collectionVariables.set(\"studentId\", body.data.id);",
+                  "pm.test(\"Có avatar URL đầy đủ\", function () { const body = pm.response.json(); pm.expect(body.data.avatarUrl).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Thêm học viên thiếu avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Thiếu Avatar",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "missing.avatar.{{runId}}@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "0901234567",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Mã lỗi 1001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 1001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Thêm học viên trùng email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Trùng Email",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "{{studentEmail}}",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "0901234567",
+                  "type": "text"
+                },
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\medical-team.png"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"Mã lỗi 2002\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 2002); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Tìm kiếm học viên nâng cao",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students?keyword=Postman&name=Nguy%E1%BB%85n&email=%40example.com&phone=090&page=0&size=10",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Dữ liệu phân trang hợp lệ\", function () { const body = pm.response.json(); pm.expect(body.data).to.have.property(\"data\").that.is.an(\"array\"); pm.expect(body.data).to.have.property(\"totalElements\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Tìm kiếm với page âm",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students?page=-1&size=10",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Mã lỗi 1001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 1001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Danh sách lựa chọn học viên",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/options",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Data là mảng\", function () { pm.expect(pm.response.json().data).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Chi tiết học viên",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/{{studentId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Đúng studentId\", function () { pm.expect(String(pm.response.json().data.id)).to.eql(pm.collectionVariables.get(\"studentId\")); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Chi tiết học viên không tồn tại",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/{{missingId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 2001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 2001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Cập nhật học viên không upload lại avatar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/{{studentId}}",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Nguyễn Văn Postman Updated",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "{{studentEmail}}",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "0912345678",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Cập nhật học viên không tồn tại",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/{{missingId}}",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Không tồn tại",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "not-found.{{runId}}@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "0912345678",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 2001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 2001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Export Excel học viên",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/export?email=%40example.com",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Trả file Excel\", function () { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\"); pm.expect(pm.response.responseSize).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Sai HTTP method của export học viên",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/export",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 405\", function () { pm.response.to.have.status(405); });",
+                  "pm.test(\"Mã lỗi 1004\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 1004); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Courses",
+      "item": [
+        {
+          "name": "SUCCESS - Thêm khóa học",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Khóa học Postman",
+                  "type": "text"
+                },
+                {
+                  "key": "code",
+                  "value": "{{courseCode}}",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Khóa học tạo bởi Postman",
+                  "type": "text"
+                },
+                {
+                  "key": "duration",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "thumbnail",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\medical-tech.jpg"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\meo.gif"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 201); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "const body = pm.response.json(); pm.collectionVariables.set(\"courseId\", body.data.id);",
+                  "pm.test(\"Có thumbnail URL đầy đủ\", function () { pm.expect(pm.response.json().data.thumbnailUrl).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Thêm khóa học thiếu thumbnail",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Thiếu Thumbnail",
+                  "type": "text"
+                },
+                {
+                  "key": "code",
+                  "value": "MISS-{{runId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "duration",
+                  "value": "10",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Mã lỗi 1001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 1001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Thêm khóa học trùng code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Trùng Code",
+                  "type": "text"
+                },
+                {
+                  "key": "code",
+                  "value": "{{courseCode}}",
+                  "type": "text"
+                },
+                {
+                  "key": "duration",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "thumbnail",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\medical-tech.jpg"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"Mã lỗi 3002\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 3002); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Tìm kiếm khóa học nâng cao",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses?keyword=Postman&name=kh%C3%B3a&code={{courseCode}}&minDuration=10&maxDuration=50&page=0&size=10",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Data phân trang là mảng\", function () { pm.expect(pm.response.json().data.data).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Khoảng thời lượng không hợp lệ",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses?minDuration=50&maxDuration=10&page=0&size=10",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Mã lỗi 1006\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 1006); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Danh sách lựa chọn khóa học",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/options",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Data là mảng\", function () { pm.expect(pm.response.json().data).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Chi tiết khóa học",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{courseId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Đúng courseId\", function () { pm.expect(String(pm.response.json().data.id)).to.eql(pm.collectionVariables.get(\"courseId\")); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Chi tiết khóa học không tồn tại",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{missingId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 3001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 3001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Cập nhật khóa học không upload lại thumbnail",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{courseId}}",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Khóa học Postman Updated",
+                  "type": "text"
+                },
+                {
+                  "key": "code",
+                  "value": "{{courseCode}}",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Đã cập nhật",
+                  "type": "text"
+                },
+                {
+                  "key": "duration",
+                  "value": "35",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Cập nhật khóa học không tồn tại",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{missingId}}",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Không tồn tại",
+                  "type": "text"
+                },
+                {
+                  "key": "code",
+                  "value": "NOTFOUND-{{runId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "duration",
+                  "value": "20",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 3001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 3001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Thêm ảnh gallery khóa học",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{courseId}}/images",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\totoro.gif"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\vit.gif"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Thiếu multipart part images",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{courseId}}/images",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "unused",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Mã lỗi 1001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 1001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Export Excel khóa học",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/export?code={{courseCode}}&minDuration=1&maxDuration=100",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Trả file Excel\", function () { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\"); pm.expect(pm.response.responseSize).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Export với khoảng thời lượng sai",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/export?minDuration=100&maxDuration=1",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Mã lỗi 1006\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 1006); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Lessons",
+      "item": [
+        {
+          "name": "SUCCESS - Thêm bài học có thumbnail và video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "title",
+                  "value": "Bài học Postman",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Bài học có ảnh và video",
+                  "type": "text"
+                },
+                {
+                  "key": "thumbnail",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\medical-tech.jpg"
+                },
+                {
+                  "key": "video",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\lesson-video-1.mp4"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\vit.gif"
+                },
+                {
+                  "key": "videos",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\lesson-video-2.mp4"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 201); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "const body = pm.response.json(); pm.collectionVariables.set(\"lessonId\", body.data.id);",
+                  "pm.test(\"Có thumbnail và video URL\", function () { const data = pm.response.json().data; pm.expect(data.thumbnailUrl).to.match(/^https?:\\/\\//); pm.expect(data.videoUrl).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Thêm bài học thiếu video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "title",
+                  "value": "Thiếu video",
+                  "type": "text"
+                },
+                {
+                  "key": "thumbnail",
+                  "type": "file",
+                  "src": "D:\\Java\\managerLMSMini\\uploads\\seed\\assets\\medical-tech.jpg"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Mã lỗi 1001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 1001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Danh sách bài học theo khóa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons/course/{{courseId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Data là mảng\", function () { pm.expect(pm.response.json().data).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Danh sách bài học của khóa không tồn tại",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons/course/{{missingId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 3001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 3001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Chi tiết bài học",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons/{{lessonId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Đúng lessonId\", function () { pm.expect(String(pm.response.json().data.id)).to.eql(pm.collectionVariables.get(\"lessonId\")); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Chi tiết bài học không tồn tại",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons/{{missingId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 4001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 4001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Cập nhật bài học không upload lại media",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons/{{lessonId}}",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "title",
+                  "value": "Bài học Postman Updated",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Giữ thumbnail và video cũ",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Cập nhật bài học không tồn tại",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons/{{missingId}}",
+            "description": "",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "title",
+                  "value": "Không tồn tại",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 4001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 4001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Enrollments",
+      "item": [
+        {
+          "name": "SUCCESS - Đăng ký học viên với khóa học",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentIds\": [{{studentId}}],\n  \"courseIds\": [{{courseId}}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 201); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "const body = pm.response.json(); pm.collectionVariables.set(\"enrollmentId\", body.data[0].id);",
+                  "pm.test(\"Trả danh sách đăng ký\", function () { pm.expect(pm.response.json().data).to.be.an(\"array\").that.is.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Đăng ký thiếu học viên",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": [{{courseId}}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Mã lỗi 1001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 1001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Đăng ký khóa học không tồn tại",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentIds\": [{{studentId}}],\n  \"courseIds\": [{{missingId}}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 3001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 3001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Chi tiết đăng ký",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments/{{enrollmentId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Đúng enrollmentId\", function () { pm.expect(String(pm.response.json().data.id)).to.eql(pm.collectionVariables.get(\"enrollmentId\")); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Chi tiết đăng ký không tồn tại",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments/{{missingId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 5001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 5001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Cập nhật đăng ký",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments/{{enrollmentId}}",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Cập nhật đăng ký không tồn tại",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments/{{missingId}}",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 5001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 5001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Danh sách học viên của khóa học",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments/course/{{courseId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });",
+                  "pm.test(\"Danh sách có đăng ký vừa tạo\", function () { const data = pm.response.json().data; pm.expect(data.some(function (item) { return String(item.id) === pm.collectionVariables.get(\"enrollmentId\"); })).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Danh sách đăng ký của khóa không tồn tại",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments/course/{{missingId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 3001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 3001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Không xóa khóa học đang có học viên",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{courseId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"Mã lỗi 3003\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 3003); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Cleanup và lỗi sau xóa",
+      "item": [
+        {
+          "name": "SUCCESS - Xóa mềm bài học",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons/{{lessonId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Xóa lại bài học",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lessons/{{lessonId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 4001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 4001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Xóa mềm đăng ký",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments/{{enrollmentId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Xóa lại đăng ký",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/enrollments/{{enrollmentId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 5001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 5001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Xóa mềm khóa học sau khi đã xóa đăng ký",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{courseId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Xóa lại khóa học",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{courseId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 3001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 3001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SUCCESS - Xóa mềm học viên",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/{{studentId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ApiResponse có code/message/data\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 200); pm.expect(body).to.have.property(\"message\"); pm.expect(body).to.have.property(\"data\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERROR - Xóa lại học viên",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/{{studentId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Mã lỗi 2001\", function () { const body = pm.response.json(); pm.expect(body).to.have.property(\"code\", 2001); pm.expect(body).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

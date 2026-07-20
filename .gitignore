@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Local secrets and runtime uploads
+.env
+uploads/students/
+uploads/courses/
+uploads/lessons/
